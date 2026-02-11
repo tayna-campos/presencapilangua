@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Presença Seminário Pilanguá</title>
+
+<style>
+body{
+  font-family: Arial, sans-serif;
+  background: #f4f6f8;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  height:100vh;
+  margin:0;
+}
+
+.container{
+  background:white;
+  padding:30px;
+  border-radius:12px;
+  box-shadow:0 8px 20px rgba(0,0,0,0.08);
+  width:320px;
+  text-align:center;
+}
+
+h1{
+  font-size:20px;
+  margin-bottom:20px;
+  color:#333;
+}
+
+input{
+  width:100%;
+  padding:12px;
+  border:1px solid #ddd;
+  border-radius:8px;
+  font-size:16px;
+  margin-bottom:15px;
+}
+
+button{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:8px;
+  font-size:16px;
+  background:#2c7be5;
+  color:white;
+  cursor:pointer;
+}
+
+button:hover{
+  background:#1a68d1;
+}
+
+#msg{
+  margin-top:15px;
+  font-size:14px;
+  color:#444;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+  <h1>Presença<br>Seminário Pilanguá</h1>
+
+  <input type="text" id="nome" placeholder="Digite seu nome">
+  <button onclick="enviar()">Registrar Presença</button>
+
+  <p id="msg"></p>
+</div>
+
+<script>
+
+function getDeviceId() {
+  let id = localStorage.getItem("deviceId");
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem("deviceId", id);
+  }
+  return id;
+}
+
+const LAT_LOCAL = -25.3879;
+const LNG_LOCAL = -49.2925;
+const RAIO = 100;
+
+function distancia(lat1, lon1, lat2, lon2) {
+  const R = 6371e3;
+  const φ1 = lat1*Math.PI/180;
+  const φ2 = lat2*Math.PI/180;
+  const Δφ = (lat2-lat1)*Math.PI/180;
+  const Δλ = (lon2-lon1)*Math.PI/180;
+
+  const a =
+    Math.sin(Δφ/2)*Math.sin(Δφ/2) +
+    Math.cos(φ1)*Math.cos(φ2) *
+    Math.sin(Δλ/2)*Math.sin(Δλ/2);
+
+  const c = 2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+  return R*c;
+}
+
+function enviar() {
+
+  let nome = document.getElementById("nome").value.trim();
+  let deviceId = getDeviceId();
+
+  if(!nome){
+    alert("Digite seu nome");
+    return;
+  }
+
+  document.getElementById("msg").innerText = "Verificando localização...";
+
+  navigator.geolocation.getCurrentPosition(function(pos){
+
+    let dist = distancia(
+      pos.coords.latitude,
+      pos.coords.longitude,
+      LAT_LOCAL,
+      LNG_LOCAL
+    );
+
+    if(dist > RAIO){
+      document.getElementById("msg").innerText =
+        "Você precisa estar no local para registrar presença.";
+      return;
+    }
+
+    document.getElementById("msg").innerText = "Registrando presença...";
+
+    fetch("COLE_AQUI_URL_DO_SCRIPT", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: "nome=" + encodeURIComponent(nome) +
+            "&deviceId=" + encodeURIComponent(deviceId)
+    })
+    .then(res => res.text())
+    .then(res => {
+
+      if(res == "JA_RESPONDEU"){
+        document.getElementById("msg").innerText =
+          "Você já registrou presença hoje.";
+      } else {
+        document.getElementById("msg").innerText =
+          "Presença registrada com sucesso!";
+      }
+
+    });
+
+  },
+  function(){
+    document.getElementById("msg").innerText =
+      "Permita o acesso à localização para continuar.";
+  });
+
+}
+
+</script>
+
+</body>
+</html>
