@@ -87,9 +87,12 @@ function getDeviceId() {
   return id;
 }
 
-const LAT_LOCAL = -25.3879;
-const LNG_LOCAL = -49.2925;
-const RAIO = 100;
+// 📍 COORDENADAS CORRETAS
+const LAT_LOCAL = -25.38226224646342;
+const LNG_LOCAL = -49.294483646886995;
+
+// 🔥 RAIO AJUSTADO
+const RAIO = 200;
 
 function distancia(lat1, lon1, lat2, lon2) {
   const R = 6371e3;
@@ -120,49 +123,57 @@ function enviar() {
 
   document.getElementById("msg").innerText = "Verificando localização...";
 
-  navigator.geolocation.getCurrentPosition(function(pos){
+  navigator.geolocation.getCurrentPosition(
+    function(pos){
 
-    let dist = distancia(
-      pos.coords.latitude,
-      pos.coords.longitude,
-      LAT_LOCAL,
-      LNG_LOCAL
-    );
+      let dist = distancia(
+        pos.coords.latitude,
+        pos.coords.longitude,
+        LAT_LOCAL,
+        LNG_LOCAL
+      );
 
-    if(dist > RAIO){
-      document.getElementById("msg").innerText =
-        "Você precisa estar no local para registrar presença.";
-      return;
-    }
-
-    document.getElementById("msg").innerText = "Registrando presença...";
-
-    fetch("https://script.google.com/macros/s/AKfycbwTt-pSMyK0SVSr7FfI11eolyxclzYLWlgrz0OcMLZrjqG-dA-_xRq5ayn6chJ5hygTVQ/exec", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
-      body: "nome=" + encodeURIComponent(nome) +
-            "&deviceId=" + encodeURIComponent(deviceId)
-    })
-    .then(res => res.text())
-    .then(res => {
-
-      if(res == "JA_RESPONDEU"){
+      // 🔍 DEBUG: mostra distância real
+      if(dist > RAIO){
         document.getElementById("msg").innerText =
-          "Você já registrou presença hoje.";
-      } else {
-        document.getElementById("msg").innerText =
-          "Presença registrada com sucesso!";
+          "Fora do local (" + Math.round(dist) + "m)";
+        return;
       }
 
-    });
+      document.getElementById("msg").innerText = "Registrando presença...";
 
-  },
-  function(){
-    document.getElementById("msg").innerText =
-      "Permita o acesso à localização para continuar.";
-  });
+      fetch("https://script.google.com/macros/s/AKfycbwTt-pSMyK0SVSr7FfI11eolyxclzYLWlgrz0OcMLZrjqG-dA-_xRq5ayn6chJ5hygTVQ/exec", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: "nome=" + encodeURIComponent(nome) +
+              "&deviceId=" + encodeURIComponent(deviceId)
+      })
+      .then(res => res.text())
+      .then(res => {
+
+        if(res == "JA_RESPONDEU"){
+          document.getElementById("msg").innerText =
+            "Você já registrou presença hoje.";
+        } else {
+          document.getElementById("msg").innerText =
+            "Presença registrada com sucesso!";
+        }
+
+      });
+
+    },
+    function(err){
+      document.getElementById("msg").innerText =
+        "Erro localização: " + err.message;
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    }
+  );
 
 }
 
