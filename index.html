@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Teste Presença</title>
+<title>Presença Seminário Pilanguá</title>
 
 <style>
 body{
@@ -26,22 +26,40 @@ body{
   text-align:center;
 }
 
+h1{
+  font-size:20px;
+  margin-bottom:20px;
+  color:#333;
+}
+
 input{
   width:100%;
   padding:12px;
+  border:1px solid #ddd;
+  border-radius:8px;
+  font-size:16px;
   margin-bottom:15px;
 }
 
 button{
   width:100%;
   padding:12px;
+  border:none;
+  border-radius:8px;
+  font-size:16px;
   background:#2c7be5;
   color:white;
-  border:none;
+  cursor:pointer;
+}
+
+button:hover{
+  background:#1a68d1;
 }
 
 #msg{
   margin-top:15px;
+  font-size:14px;
+  color:#444;
 }
 </style>
 
@@ -50,10 +68,10 @@ button{
 <body>
 
 <div class="container">
-  <h2>Teste de Presença</h2>
+  <h1>Presença<br>Seminário Pilanguá</h1>
 
   <input type="text" id="nome" placeholder="Digite seu nome">
-  <button onclick="enviar()">Registrar</button>
+  <button onclick="enviar()">Registrar Presença</button>
 
   <p id="msg"></p>
 </div>
@@ -69,12 +87,12 @@ function getDeviceId() {
   return id;
 }
 
-// 📍 COORDENADAS EXATAS
-const LAT_LOCAL = -25.392819899998784;
-const LNG_LOCAL = -49.296405164416676;
+// 📍 Coordenadas corretas
+const LAT_LOCAL = -25.38226224646342;
+const LNG_LOCAL = -49.294483646886995;
 
-// 🔥 RAIO PARA TESTE (bem tolerante)
-const RAIO = 300;
+// 🔥 Raio ajustado
+const RAIO = 200;
 
 function distancia(lat1, lon1, lat2, lon2) {
   const R = 6371e3;
@@ -84,11 +102,12 @@ function distancia(lat1, lon1, lat2, lon2) {
   const Δλ = (lon2-lon1)*Math.PI/180;
 
   const a =
-    Math.sin(Δφ/2)**2 +
+    Math.sin(Δφ/2)*Math.sin(Δφ/2) +
     Math.cos(φ1)*Math.cos(φ2) *
-    Math.sin(Δλ/2)**2;
+    Math.sin(Δλ/2)*Math.sin(Δλ/2);
 
   const c = 2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
   return R*c;
 }
 
@@ -120,8 +139,7 @@ function enviar() {
         return;
       }
 
-      document.getElementById("msg").innerText =
-        "Dentro do raio (" + Math.round(dist) + "m) — enviando...";
+      document.getElementById("msg").innerText = "Registrando presença...";
 
       fetch("https://script.google.com/macros/s/AKfycbw-ORd7HBuLdiz70srR4ELnkBR_SP9WWcAh1bQoK7MEQSmvVcf9qMJZdh4JOCfXTUQReQ/exec", {
         method: "POST",
@@ -133,17 +151,33 @@ function enviar() {
       })
       .then(res => res.text())
       .then(res => {
+
+        if(res === "JA_RESPONDEU"){
+          document.getElementById("msg").innerText =
+            "Você já registrou presença hoje.";
+        } else if(res === "OK"){
+          document.getElementById("msg").innerText =
+            "Presença registrada com sucesso!";
+        } else {
+          document.getElementById("msg").innerText =
+            "Erro inesperado: " + res;
+        }
+
+      })
+      .catch(err => {
         document.getElementById("msg").innerText =
-          "Resposta: " + res;
+          "Erro ao enviar: " + err;
       });
 
     },
     function(err){
       document.getElementById("msg").innerText =
-        "Erro: " + err.message;
+        "Erro localização: " + err.message;
     },
     {
-      enableHighAccuracy: true
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
     }
   );
 
