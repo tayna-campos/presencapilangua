@@ -87,11 +87,11 @@ function getDeviceId() {
   return id;
 }
 
-// 📍 COORDENADAS CORRETAS
+// 📍 Coordenadas corretas
 const LAT_LOCAL = -25.38226224646342;
 const LNG_LOCAL = -49.294483646886995;
 
-// 🔥 RAIO AJUSTADO
+// 🔥 Raio ajustado
 const RAIO = 200;
 
 function distancia(lat1, lon1, lat2, lon2) {
@@ -133,7 +133,6 @@ function enviar() {
         LNG_LOCAL
       );
 
-      // 🔍 DEBUG: mostra distância real
       if(dist > RAIO){
         document.getElementById("msg").innerText =
           "Fora do local (" + Math.round(dist) + "m)";
@@ -142,7 +141,7 @@ function enviar() {
 
       document.getElementById("msg").innerText = "Registrando presença...";
 
-      fetch("https://script.google.com/macros/s/AKfycbwTt-pSMyK0SVSr7FfI11eolyxclzYLWlgrz0OcMLZrjqG-dA-_xRq5ayn6chJ5hygTVQ/exec", {
+      fetch("https://script.google.com/macros/s/AKfycbw-ORd7HBuLdiz70srR4ELnkBR_SP9WWcAh1bQoK7MEQSmvVcf9qMJZdh4JOCfXTUQReQ/exec", {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded"
@@ -153,14 +152,21 @@ function enviar() {
       .then(res => res.text())
       .then(res => {
 
-        if(res == "JA_RESPONDEU"){
+        if(res === "JA_RESPONDEU"){
           document.getElementById("msg").innerText =
             "Você já registrou presença hoje.";
-        } else {
+        } else if(res === "OK"){
           document.getElementById("msg").innerText =
             "Presença registrada com sucesso!";
+        } else {
+          document.getElementById("msg").innerText =
+            "Erro inesperado: " + res;
         }
 
+      })
+      .catch(err => {
+        document.getElementById("msg").innerText =
+          "Erro ao enviar: " + err;
       });
 
     },
